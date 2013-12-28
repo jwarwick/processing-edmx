@@ -1,7 +1,7 @@
 default: all
 
 all:
-	javac -d . src/*.java 
+	javac -d . -classpath /Applications/Processing.app/Contents/Java/core.jar src/*.java 
 	jar -cf library/eDMX.jar eDMX
 
 clean:
