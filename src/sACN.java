@@ -140,7 +140,7 @@ public class sACN {
   private InetAddress getUniverseAddress(int universe_number) throws UnknownHostException {
     byte[] ip = new byte[4];
     ip[0] = (byte)239;
-    ip[1] = (byte)235;
+    ip[1] = (byte)255;
     ip[2] = (byte)((universe_number & 0xffff) >> 8);
     ip[3] = (byte)(universe_number & 0xff);
     
