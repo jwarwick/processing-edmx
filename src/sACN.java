@@ -4,6 +4,7 @@ import java.net.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.UUID;
+import java.nio.charset.Charset;
 
 import processing.core.*;
 
@@ -33,13 +34,13 @@ public class sACN {
     applet.registerMethod("dispose", this);
   }
 
-  public void sendPacket(int universe_number, byte start_code, byte[] data) throws UnknownHostException, IOException {
+  public void sendPacket(short universe_number, byte start_code, byte[] data) throws UnknownHostException, IOException {
     this.sendPacket(universe_number, start_code, data, this.source_name, this.priority, 
         this.preview_data, this.sequence_number, this.cid);
   }
 
 
-  public void sendPacket(int universe_number, byte start_code, byte[] data, String source_name,
+  public void sendPacket(short universe_number, byte start_code, byte[] data, String source_name,
       byte priority, boolean preview_data, byte sequence_number, UUID cid) throws UnknownHostException, IOException {
     
     final InetAddress addr = getUniverseAddress(universe_number);
@@ -48,6 +49,7 @@ public class sACN {
     final int packet_size = 126 + data.length;
     ByteBuffer buffer = ByteBuffer.allocate(packet_size);
     writeRootLayer(buffer, packet_size, cid);
+    writeFramingLayer(buffer, packet_size, source_name, priority, sequence_number, universe_number);
 
     DatagramPacket packet = new DatagramPacket(buffer.array(), packet_size, addr, this.sdt_acn_port);
     this.datagramSocket.send(packet);
@@ -58,7 +60,7 @@ public class sACN {
   private static final byte[] rl_identifier = {0x41, 0x53, 0x43, 0x2d, 0x45, 
                                                0x31, 0x2e, 0x31, 0x37, 0x00, 
                                                0x00, 0x00};
-  private static final byte rl_high = 0x07;
+  private static final byte rl_high = 0x7;
   private static final int rl_vector = 0x00000004;
 
   private void writeRootLayer(ByteBuffer buffer, final int packet_size, final UUID cid) {
@@ -71,6 +73,35 @@ public class sACN {
     buffer.putInt(rl_vector);
     buffer.putLong(cid.getMostSignificantBits());
     buffer.putLong(cid.getLeastSignificantBits());
+  }
+
+  private static final byte fl_high = 0x7;
+  private static final int fl_vector = 0x00000002;
+
+  private void writeFramingLayer(ByteBuffer buffer, int packet_size, String source_name, byte priority, 
+                                 byte sequence_number, short universe) {
+    // framing pdu length starts from octet 38
+    final short flags = lengthFlags(packet_size - 38);
+    buffer.putShort(flags);
+    buffer.putInt(fl_vector);
+    byte[] source_bytes;
+    try {
+      source_bytes = source_name.getBytes("UTF-8");
+    }
+    catch(UnsupportedEncodingException e)
+    {
+      e.printStackTrace();
+      return;
+    }
+    buffer.put(source_bytes);
+    // zero-out remainder of source_nam field
+    byte[] zeros = new byte[64 - source_bytes.length];
+    buffer.put(zeros);
+    buffer.put(priority);
+    buffer.putShort((short)0x0000);
+    buffer.put(sequence_number);
+    buffer.put((byte)0x00); // XXX - options
+    buffer.putShort(universe);
   }
 
   private short lengthFlags(final int packet_size) {
