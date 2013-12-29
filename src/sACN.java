@@ -50,9 +50,13 @@ public class sACN {
     ByteBuffer buffer = ByteBuffer.allocate(packet_size);
     writeRootLayer(buffer, packet_size, cid);
     writeFramingLayer(buffer, packet_size, source_name, priority, sequence_number, universe_number);
+    writeDMPLayer(buffer, packet_size, start_code, data);
 
     DatagramPacket packet = new DatagramPacket(buffer.array(), packet_size, addr, this.sdt_acn_port);
     this.datagramSocket.send(packet);
+
+    // XXX - the sequence number should be per-universe
+    this.sequence_number++;
   }
 
   private static final short rl_preamble_size = 0x0010;
@@ -102,6 +106,27 @@ public class sACN {
     buffer.put(sequence_number);
     buffer.put((byte)0x00); // XXX - options
     buffer.putShort(universe);
+  }
+
+  private static final byte dl_high = 0x7;
+  private static final byte dl_vector = 0x02;
+  private static final byte dl_type = (byte)0xa1;
+  private static final short dl_first = 0x0000;
+  private static final short dl_increment = 0x0001;
+
+  private void writeDMPLayer(ByteBuffer buffer, int packet_size, byte start_code, byte[] data) {
+    // dmp pdul length starts from octet 115
+    final short flags = lengthFlags(packet_size - 115);
+    buffer.putShort(flags);
+    buffer.put(dl_vector);
+    buffer.put(dl_type);
+    buffer.putShort(dl_first);
+    buffer.putShort(dl_increment);
+    // XXX - sanity check data length
+    short property_value_count = (short)(1 + data.length);
+    buffer.putShort(property_value_count);
+    buffer.put(start_code);
+    buffer.put(data);
   }
 
   private short lengthFlags(final int packet_size) {
