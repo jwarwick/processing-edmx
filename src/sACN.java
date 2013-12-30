@@ -26,13 +26,11 @@ public class sACN {
     this.source_name = source_name;
     this.sacn_socket = new sACNSocket();
 
-    System.out.println("CREATED sACN object:" + this.source_name);
-
     applet.registerMethod("dispose", this);
   }
 
-  public void sendPacket(short universe_number, byte start_code, byte[] data) throws UnknownHostException, IOException {
-    this.sendPacket(universe_number, start_code, data, this.source_name, this.priority, 
+  public void sendPacket(short universe_number, byte[] data) throws UnknownHostException, IOException {
+    this.sendPacket(universe_number, (byte)0, data, this.source_name, this.priority, 
         this.preview_data, this.sequence_number, this.cid);
   }
 
