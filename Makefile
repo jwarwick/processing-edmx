@@ -1,10 +1,13 @@
 default: all
 
 all:
-	javac -d . -classpath /Applications/Processing.app/Contents/Java/core.jar src/*.java 
-	jar -cf library/eDMX.jar eDMX
+	javac -d build -classpath /Applications/Processing.app/Contents/Java/core.jar src/*.java 
+	jar -cf library/eDMX.jar build
 
 clean:
 	$(RM) library/*
-	$(RM) eDMX/*
+	$(RM) -rf build/*
+
+package:
+	zip -r bin/eDMX.zip eDMX -x "eDMX/library/.gitignore" 
 
