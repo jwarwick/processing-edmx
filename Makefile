@@ -2,7 +2,7 @@ default: all
 
 all:
 	javac -d build -classpath /Applications/Processing.app/Contents/Java/core.jar src/*.java 
-	jar -cf library/eDMX.jar build
+	jar cf library/eDMX.jar -C build eDMX
 
 clean:
 	$(RM) library/*
