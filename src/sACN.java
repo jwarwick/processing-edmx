@@ -24,7 +24,7 @@ public class sACN {
 
   public sACN(PApplet applet, String source_name) throws SocketException {
     this.source_name = source_name;
-    this.sacn_socket = new sACNSocket();
+    this.sacn_socket = sACNSocket.getInstance();
 
     applet.registerMethod("dispose", this);
   }

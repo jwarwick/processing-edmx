@@ -8,14 +8,28 @@ import java.nio.charset.Charset;
 
 public class sACNSocket {
 
-  private static final int sdt_acn_port = 5568;
+  private final static sACNSocket INSTANCE = new sACNSocket();
+  private final static int sdt_acn_port = 5568;
   private DatagramSocket datagramSocket;
 
   /**
-   * Create and open the sACN socket.
+   * Retrieve the singleton socket.
    */
-  public sACNSocket() throws SocketException {
-    this.datagramSocket = new DatagramSocket();
+  public static sACNSocket getInstance() {
+    return INSTANCE;
+  }
+
+  /**
+   * Create and open the sACN socket.
+   * Private. Use the getInstance() method to retrieve the singleton socket.
+   */
+  private sACNSocket() {
+    try {
+      this.datagramSocket = new DatagramSocket();
+    } 
+    catch(SocketException e) {
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -76,8 +90,7 @@ public class sACNSocket {
     try {
       source_bytes = source_name.getBytes("UTF-8");
     }
-    catch(UnsupportedEncodingException e)
-    {
+    catch(UnsupportedEncodingException e) {
       e.printStackTrace();
       return;
     }
