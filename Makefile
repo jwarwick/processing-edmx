@@ -7,6 +7,7 @@ all:
 clean:
 	$(RM) library/*
 	$(RM) -rf build/*
+	$(RM) bin/*
 
 package:
 	zip -r bin/eDMX.zip eDMX -x "eDMX/library/.gitignore" 
