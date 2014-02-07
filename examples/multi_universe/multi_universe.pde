@@ -13,8 +13,9 @@ void setup() {
 
 void draw() {  
   universe1.setSlot(0, count);
-  byte[] dataArray = {count, count, count, count};
-  universe2.setSlots(5, dataArray);
+  byte[] dataArray = {0, count, 0, 
+                      0, 0, count};
+  universe2.setSlots(3, dataArray);
   count++;
   try {
     universe1.sendData();
