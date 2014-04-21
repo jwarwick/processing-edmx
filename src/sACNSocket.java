@@ -6,10 +6,14 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.nio.charset.Charset;
 
+import java.util.Enumeration;
+import java.util.List;
+
 public class sACNSocket {
 
   private final static sACNSocket INSTANCE = new sACNSocket();
   private final static int sdt_acn_port = 5568;
+  private static String interfaceName = null;
   private DatagramSocket datagramSocket;
 
   /**
@@ -20,17 +24,87 @@ public class sACNSocket {
   }
 
   /**
+   * List the network interfaces available.
+   */
+  public static void listInterfaces() {
+      try{
+        System.out.println("Network Interfaces:" + "\n");
+        for (Enumeration<NetworkInterface> en =
+            NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+
+          NetworkInterface intf = en.nextElement();
+          System.out.println("    " + intf.getName() + " " +
+              intf.getDisplayName() + "\n");
+
+          for (Enumeration<InetAddress> enumIpAddr =
+              intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+
+            String ipAddr = enumIpAddr.nextElement().toString();
+
+            System.out.println("        " + ipAddr + "\n");
+          }
+        }
+      }
+      catch(Exception e) {
+      }
+  }
+
+  /**
+   * Bind the datagram socket to a specific network interface.
+   * Uses the interface name for lookup (eg: eth1).
+   */
+  public static void bindByName(String intfname) {
+    interfaceName = intfname;
+    System.out.println("Setting interfaceName: " + interfaceName);
+  }
+
+  /**
    * Create and open the sACN socket.
    * Private. Use the getInstance() method to retrieve the singleton socket.
    */
   private sACNSocket() {
+    this.interfaceName = "en1";
+    System.out.println("Constructor interfaceName: " + this.interfaceName);
+    NetworkInterface netInterface = null;
     try {
-      this.datagramSocket = new DatagramSocket();
+      if (null != this.interfaceName)
+      {
+        System.out.println("Binding to network interface: " + this.interfaceName);
+        netInterface = NetworkInterface.getByName(this.interfaceName);
+      }
+    }
+    catch(Exception e) {
+      System.out.println("Failed to find network interface: " + this.interfaceName);
+    }
+
+    InetAddress netAddress = null;
+    System.out.println("network interface: " + netInterface);
+    if (null != netInterface)
+    {
+      netAddress = getFirstIPv4Address(netInterface);
+      System.out.println("Binding to address: " + netAddress);
+    }
+    
+    try {
+      InetSocketAddress addr = new InetSocketAddress(netAddress, 0);
+      this.datagramSocket = new DatagramSocket(addr);
     } 
-    catch(SocketException e) {
+    catch(Exception e) {
       e.printStackTrace();
     }
   }
+
+  private InetAddress getFirstIPv4Address(NetworkInterface iface) {
+    List<InterfaceAddress> addresses = iface.getInterfaceAddresses();
+    return addresses.get(1).getAddress();
+    /* InetAddress addr = InetAddress.getLocalHost(); */
+    /* for (Enumeration<InetAddress> enumIpAddr = */
+    /*     iface.getInetAddresses(); enumIpAddr.hasMoreElements(); ) { */
+
+    /*   addr = enumIpAddr.nextElement(); */
+    /* } */
+    /* return addr; */
+ }
 
   /**
    * Close the socket.
